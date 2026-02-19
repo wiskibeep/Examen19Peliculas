@@ -21,7 +21,7 @@ class DetailViewController: UIViewController {
         MovieImageView.clipsToBounds = true
         
         Task {
-           // detalle de la pelicula                                      Id exacto de la pelicula
+           // detalle de la pelicula                                 Id exacto de la pelicula
             if let detailMovie = try await MovieApi.getMovieDetail(by: movie.imdbID) {
                 self.movie = detailMovie
                 DispatchQueue.main.async {

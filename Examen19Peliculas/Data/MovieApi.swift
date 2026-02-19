@@ -3,9 +3,9 @@ import Foundation
 /// Clase responsable de todas las llamadas a la API de OMDB.
 
 class MovieApi {
-    /// URL base de la API de OMDB.
+    // URL base de la API de OMDB.
     static let OMDB_BASE_URL = "https://www.omdbapi.com/"
-    /// Clave de API personal apiKey
+    // Clave de API personal apiKey
     static let API_KEY = "312fdd3"
 
     // MARK: - Búsqueda de peliculas
