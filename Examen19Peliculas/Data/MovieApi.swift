@@ -15,9 +15,22 @@ class MovieApi {
         
         guard let query = title.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) else { return ([], 0)
         }
+        // podra buscar la pelicula pero no con todos los datos, solo:
+        /*
+         {
+           "Title": "Interstellar",
+           "Year": "2014",
+           "imdbID": "tt0816692",
+           "Type": "movie",
+           "Poster": "..."
+         }
+         y nos podemos ahorrar data y no sobre cargar el servidor, ademas de no tomar tados iniecesarios
+         
+         */
         
-        // pagina de busqueda
+        // pagina de busqueda                 apiKey  !S=!!  !!Nombre a buscar!!  pag que va
         let urlString = "\(OMDB_BASE_URL)?apikey=\(API_KEY)&s=\(query)&page=\(page)"
+        // devolvera un
         guard let url = URL(string: urlString) else { return ([], 0) }
 
         let (data, _) = try await URLSession.shared.data(from: url)
@@ -25,8 +38,12 @@ class MovieApi {
         let movies = response.Search ?? []
         let total = Int(response.totalResults ?? "0") ?? 0
         return (movies, total)
+        
+        // Se usa para llamr a valores cortos de llamara
     }
-
+    
+  //  una vez selecionado se coloca el id y se llama a esta funcion ImdbID pra llamar a los detalles,devolviendo todos los detalles de 
+    
     // MARK: - Detalle de una película
 
 
@@ -41,6 +58,90 @@ class MovieApi {
 }
 
 /*
+ //MARK: busqueda ejemplo:
+ https://www.omdbapi.com/?apikey=312fdd3&s=batman&page=1
+ 
+ 
+ {
+   "Search": [
+     {
+       "Title": "Batman Begins",
+       "Year": "2005",
+       "imdbID": "tt0372784",
+       "Type": "movie",
+       "Poster": "https://m.media-amazon.com/images/M/MV5BMzA2NDQzZDEtNDU5Ni00YTlkLTg2OWEtYmQwM2Y1YTBjMjFjXkEyXkFqcGc@._V1_SX300.jpg"
+     },
+     {
+       "Title": "The Batman",
+       "Year": "2022",
+       "imdbID": "tt1877830",
+       "Type": "movie",
+       "Poster": "https://m.media-amazon.com/images/M/MV5BMmU5NGJlMzAtMGNmOC00YjJjLTgyMzUtNjAyYmE4Njg5YWMyXkEyXkFqcGc@._V1_SX300.jpg"
+     },
+     {
+       "Title": "Batman v Superman: Dawn of Justice",
+       "Year": "2016",
+       "imdbID": "tt2975590",
+       "Type": "movie",
+       "Poster": "https://m.media-amazon.com/images/M/MV5BZTJkYjdmYjYtOGMyNC00ZGU1LThkY2ItYTc1OTVlMmE2YWY1XkEyXkFqcGc@._V1_SX300.jpg"
+     },
+     {
+       "Title": "Batman v Superman: Dawn of Justice",
+       "Year": "2016",
+       "imdbID": "tt2975590",
+       "Type": "movie",
+       "Poster": "https://m.media-amazon.com/images/M/MV5BZTJkYjdmYjYtOGMyNC00ZGU1LThkY2ItYTc1OTVlMmE2YWY1XkEyXkFqcGc@._V1_SX300.jpg"
+     },
+     {
+       "Title": "Batman",
+       "Year": "1989",
+       "imdbID": "tt0096895",
+       "Type": "movie",
+       "Poster": "https://m.media-amazon.com/images/M/MV5BYzZmZWViM2EtNzhlMi00NzBlLWE0MWEtZDFjMjk3YjIyNTBhXkEyXkFqcGc@._V1_SX300.jpg"
+     },
+     {
+       "Title": "Batman Returns",
+       "Year": "1992",
+       "imdbID": "tt0103776",
+       "Type": "movie",
+       "Poster": "https://m.media-amazon.com/images/M/MV5BZTliMDVkYTktZDdlMS00NTAwLWJhNzYtMWIwMDZjN2ViMGFiXkEyXkFqcGc@._V1_SX300.jpg"
+     },
+     {
+       "Title": "Batman Forever",
+       "Year": "1995",
+       "imdbID": "tt0112462",
+       "Type": "movie",
+       "Poster": "https://m.media-amazon.com/images/M/MV5BMTUyNjJhZWItMTZkNS00NDc4LTllNjUtYTg3NjczMzA5ZTViXkEyXkFqcGc@._V1_SX300.jpg"
+     },
+     {
+       "Title": "Batman & Robin",
+       "Year": "1997",
+       "imdbID": "tt0118688",
+       "Type": "movie",
+       "Poster": "https://m.media-amazon.com/images/M/MV5BYzU3ZjE3M2UtM2E4Ni00MDI5LTkyZGUtOTFkMGIyYjNjZGU3XkEyXkFqcGc@._V1_SX300.jpg"
+     },
+     {
+       "Title": "The Lego Batman Movie",
+       "Year": "2017",
+       "imdbID": "tt4116284",
+       "Type": "movie",
+       "Poster": "https://m.media-amazon.com/images/M/MV5BMTcyNTEyOTY0M15BMl5BanBnXkFtZTgwOTAyNzU3MDI@._V1_SX300.jpg"
+     },
+     {
+       "Title": "Batman: The Animated Series",
+       "Year": "1992–1995",
+       "imdbID": "tt0103359",
+       "Type": "series",
+       "Poster": "https://m.media-amazon.com/images/M/MV5BYjgwZWUzMzUtYTFkNi00MzM0LWFkMWUtMDViMjMxNGIxNDUxXkEyXkFqcGc@._V1_SX300.jpg"
+     }
+   ],
+   "totalResults": "632",
+   "Response": "True"
+ }
+ 
+ 
+ //MARK: EJemplo de Detalle de pelicula
+ 
  {
    "Title": "Interstellar",
    "Year": "2014",
