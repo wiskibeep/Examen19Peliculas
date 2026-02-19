@@ -20,6 +20,8 @@ class MovieViewCell: UITableViewCell {
     func configure(with movie: Movie) {
         titleLabel.text = movie.Title
         YearLabel.text = movie.Year
+        
+        //Aplicar extension de IMageView del repositorio de git 
         posterImageView.loadFrom(url: movie.Poster)
     }
 }

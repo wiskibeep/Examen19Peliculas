@@ -7,6 +7,7 @@
 
 import UIKit
 
+// extension para mostrar imagenes sin sobre cargar la app
 extension UIImageView {
     func loadFrom(url: URL) {
         DispatchQueue.global().async { [weak self] in
