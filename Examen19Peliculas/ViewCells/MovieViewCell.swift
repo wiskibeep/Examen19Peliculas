@@ -5,7 +5,7 @@ import UIKit
 class MovieViewCell: UITableViewCell {
     @IBOutlet weak var titleLabel: UILabel!
     @IBOutlet weak var posterImageView: UIImageView!
-   // @IBOutlet weak var contextoLabel: UILabel!
+    @IBOutlet weak var YearLabel: UILabel!
 
     override func awakeFromNib() {
         super.awakeFromNib()
@@ -19,6 +19,7 @@ class MovieViewCell: UITableViewCell {
     
     func configure(with movie: Movie) {
         titleLabel.text = movie.Title
+        YearLabel.text = movie.Year
         posterImageView.loadFrom(url: movie.Poster)
     }
 }

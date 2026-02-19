@@ -1,24 +1,27 @@
 import UIKit
 
-class ListViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate {
+class ListViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate, UISearchResultsUpdating {
 
-    
-    
-    
     @IBOutlet weak var tableView: UITableView!
-    var movieList: [Movie] = []
+    var originalMovies: [Movie] = []  
+    var filteredMovies: [Movie] = []
     var currentQuery: String = "Guardians"
     var currentPage: Int = 1
     var hasMore: Bool = true
     var isLoading: Bool = false
 
+    private var searchController: UISearchController!
+    private var searchTimer: Timer?
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        let searchController = UISearchController(searchResultsController: nil)
+        searchController = UISearchController(searchResultsController: nil)
         searchController.searchBar.delegate = self
+        searchController.searchResultsUpdater = self
         navigationItem.searchController = searchController
         tableView.dataSource = self
         tableView.delegate = self
+        // Carga inicial
         searchMovies(query: currentQuery, page: 1, reset: true)
     }
 
@@ -29,11 +32,15 @@ class ListViewController: UIViewController, UITableViewDataSource, UITableViewDe
             let newMovies = try await MovieApi.searchMovies(by: query, page: page)
             DispatchQueue.main.async {
                 if reset {
-                    self.movieList = newMovies
+                    self.filteredMovies = newMovies
+  
+                    if page == 1 && query == self.currentQuery && self.originalMovies.isEmpty {
+                        self.originalMovies = newMovies
+                    }
                 } else {
-                    self.movieList += newMovies
+                    self.filteredMovies += newMovies
                 }
-                self.hasMore = newMovies.count == 10 
+                self.hasMore = newMovies.count == 10
                 self.isLoading = false
                 self.currentPage = page
                 self.currentQuery = query
@@ -42,29 +49,50 @@ class ListViewController: UIViewController, UITableViewDataSource, UITableViewDe
         }
     }
 
+    // MARK: - UISearchResultsUpdating
+    func updateSearchResults(for searchController: UISearchController) {
+        searchTimer?.invalidate()
+        let newText = searchController.searchBar.text ?? ""
+        searchTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
+            guard let self = self else { return }
+            if newText.isEmpty {
+                // Mostrar la lista original al limpiar búsqueda
+                self.filteredMovies = self.originalMovies
+                self.tableView.reloadData()
+            } else if newText != self.currentQuery {
+                self.searchMovies(query: newText, page: 1, reset: true)
+            }
+        }
+    }
+
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         let query = searchBar.text ?? ""
-        searchMovies(query: query, page: 1, reset: true)
+        if query.isEmpty {
+            filteredMovies = originalMovies
+            tableView.reloadData()
+        } else {
+            searchMovies(query: query, page: 1, reset: true)
+        }
     }
     func searchBarCancelButtonClicked(_ searchBar: UISearchBar) {
-        searchMovies(query: "", page: 1, reset: true)
+        filteredMovies = originalMovies
+        tableView.reloadData()
     }
 
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        movieList.count
+        filteredMovies.count
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "MovieCell", for: indexPath) as! MovieViewCell
-        let movie = movieList[indexPath.row]
+        let movie = filteredMovies[indexPath.row]
         cell.configure(with: movie)
         return cell
     }
 
-    // Detonador de scroll infinito
+
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
-        if hasMore && !isLoading && indexPath.row == movieList.count - 1 {
-            // Cargar siguiente página
+        if hasMore && !isLoading && indexPath.row == filteredMovies.count - 1 && !(searchController.searchBar.text?.isEmpty ?? true) {
             searchMovies(query: currentQuery, page: currentPage + 1)
         }
     }
@@ -72,7 +100,7 @@ class ListViewController: UIViewController, UITableViewDataSource, UITableViewDe
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         let detailViewController = segue.destination as! DetailViewController
         let indexPath = tableView.indexPathForSelectedRow!
-        let movie = movieList[indexPath.row]
+        let movie = filteredMovies[indexPath.row]
         detailViewController.movie = movie
         tableView.deselectRow(at: indexPath, animated: false)
     }
