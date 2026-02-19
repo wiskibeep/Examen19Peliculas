@@ -3,7 +3,7 @@ import UIKit
 class ListViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UISearchBarDelegate, UISearchResultsUpdating {
 
     @IBOutlet weak var tableView: UITableView!
-    var originalMovies: [Movie] = []  
+    var originalMovies: [Movie] = []
     var filteredMovies: [Movie] = []
     var currentQuery: String = "Guardians"
     var currentPage: Int = 1
@@ -12,6 +12,7 @@ class ListViewController: UIViewController, UITableViewDataSource, UITableViewDe
 
     private var searchController: UISearchController!
     private var searchTimer: Timer?
+    private var totalResults: Int = 0
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,18 +30,18 @@ class ListViewController: UIViewController, UITableViewDataSource, UITableViewDe
         guard !isLoading else { return }
         isLoading = true
         Task {
-            let newMovies = try await MovieApi.searchMovies(by: query, page: page)
+            let (newMovies, total) = try await MovieApi.searchMoviesWithCount(by: query, page: page)
             DispatchQueue.main.async {
                 if reset {
                     self.filteredMovies = newMovies
-  
+                    self.totalResults = total
                     if page == 1 && query == self.currentQuery && self.originalMovies.isEmpty {
                         self.originalMovies = newMovies
                     }
                 } else {
                     self.filteredMovies += newMovies
                 }
-                self.hasMore = newMovies.count == 10
+                self.hasMore = self.filteredMovies.count < self.totalResults
                 self.isLoading = false
                 self.currentPage = page
                 self.currentQuery = query
@@ -56,7 +57,6 @@ class ListViewController: UIViewController, UITableViewDataSource, UITableViewDe
         searchTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false) { [weak self] _ in
             guard let self = self else { return }
             if newText.isEmpty {
-                // Mostrar la lista original al limpiar búsqueda
                 self.filteredMovies = self.originalMovies
                 self.tableView.reloadData()
             } else if newText != self.currentQuery {
@@ -90,7 +90,7 @@ class ListViewController: UIViewController, UITableViewDataSource, UITableViewDe
         return cell
     }
 
-
+    // Scroll infinito: pide más si hay más resultados y no está cargando ya
     func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
         if hasMore && !isLoading && indexPath.row == filteredMovies.count - 1 && !(searchController.searchBar.text?.isEmpty ?? true) {
             searchMovies(query: currentQuery, page: currentPage + 1)
